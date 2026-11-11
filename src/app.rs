@@ -280,7 +280,10 @@ impl SekaiHunterApp {
 
     fn record_with_level(&mut self, message: impl Into<String>, level: ActivityLevel) {
         let message = message.into();
-        log::info!("{message}");
+        match level {
+            ActivityLevel::Info => log::info!("{message}"),
+            ActivityLevel::Error => log::error!("{message}"),
+        }
         self.activity_log.push(ActivityLogEntry {
             timestamp: utc_timestamp_now(),
             level,
@@ -586,7 +589,6 @@ impl SekaiHunterApp {
                     self.prepare_next_archive(ctx);
                 }
                 BackgroundEvent::Failed(message) => {
-                    log::error!("{message}");
                     self.record_with_level(message.clone(), ActivityLevel::Error);
                     self.mod_message = Some((message, true));
                     self.prepare_next_archive(ctx);
@@ -1386,7 +1388,7 @@ impl SekaiHunterApp {
         draw_full_width_panel(ui, |ui| {
             ui.horizontal(|ui| {
                 ui.add_sized(
-                    [156.0, 20.0],
+                    [176.0, 20.0],
                     egui::Label::new(
                         RichText::new("Fecha y hora")
                             .color(SECONDARY_TEXT)
@@ -1415,12 +1417,12 @@ impl SekaiHunterApp {
             for entry in self.activity_log.iter().rev() {
                 ui.horizontal_top(|ui| {
                     ui.add_sized(
-                        [156.0, 20.0],
+                        [176.0, 20.0],
                         egui::Label::new(
                             RichText::new(&entry.timestamp)
                                 .monospace()
                                 .color(SECONDARY_TEXT)
-                                .size(11.0),
+                                .size(12.0),
                         ),
                     );
                     ui.add_sized(
@@ -1429,7 +1431,7 @@ impl SekaiHunterApp {
                             RichText::new(entry.level.label())
                                 .monospace()
                                 .color(entry.level.color())
-                                .size(11.5)
+                                .size(12.0)
                                 .strong(),
                         ),
                     );
@@ -1438,7 +1440,7 @@ impl SekaiHunterApp {
                             RichText::new(localized_activity_message(&entry.message))
                                 .monospace()
                                 .color(PRIMARY_TEXT)
-                                .size(12.0),
+                                .size(12.5),
                         )
                         .wrap(),
                     );
@@ -1850,18 +1852,18 @@ impl eframe::App for SekaiHunterApp {
                         ui.label(
                             RichText::new("MONSTER HUNTER: WORLD")
                                 .color(SECONDARY_TEXT)
-                                .size(10.0),
+                                .size(11.0),
                         );
                         ui.label(
                             RichText::new("NATIVE LINUX")
                                 .color(SECONDARY_TEXT)
-                                .size(10.0),
+                                .size(11.0),
                         );
                         ui.add_space(12.0);
                         ui.label(
                             RichText::new("MOD MANAGEMENT INSPIRED BY")
                                 .color(SECONDARY_TEXT)
-                                .size(9.0),
+                                .size(10.0),
                         );
                         ui.hyperlink_to(
                             RichText::new("MHW Mod Manager · BoltMan")
@@ -1877,43 +1879,35 @@ impl eframe::App for SekaiHunterApp {
             .frame(Frame::central_panel(&ctx.style()).fill(BACKGROUND))
             .show(ctx, |ui| {
                 egui::ScrollArea::vertical().show(ui, |ui| {
-                    let viewport_width = ui.available_width();
-                    let content_width = viewport_width;
-                    ui.horizontal(|ui| {
-                        ui.add_space(((viewport_width - content_width) * 0.5).max(0.0));
-                        ui.allocate_ui_with_layout(
-                            Vec2::new(content_width, ui.available_height()),
-                            Layout::top_down(Align::Min),
-                            |ui| {
-                                ui.add_space(24.0);
-                                if self.selected_section != AppSection::Library {
-                                    draw_section_title(ui, self.selected_section.title());
-                                    ui.add_space(18.0);
-                                }
+                    // Let the scroll area measure the natural height of the selected
+                    // section. A fixed viewport-height child clips long pages and keeps
+                    // the scrollbar from representing their full content.
+                    ui.add_space(24.0);
+                    if self.selected_section != AppSection::Library {
+                        draw_section_title(ui, self.selected_section.title());
+                        ui.add_space(18.0);
+                    }
 
-                                if self.selected_section == AppSection::Library {
-                                    self.draw_library_dashboard(ui, ctx);
-                                    self.draw_mod_library(ui, ctx);
-                                }
+                    if self.selected_section == AppSection::Library {
+                        self.draw_library_dashboard(ui, ctx);
+                        self.draw_mod_library(ui, ctx);
+                    }
 
-                                if self.selected_section == AppSection::Plugins {
-                                    self.draw_plugins(ui);
-                                }
+                    if self.selected_section == AppSection::Plugins {
+                        self.draw_plugins(ui);
+                    }
 
-                                if self.selected_section == AppSection::Diagnostics {
-                                    self.draw_diagnostics(ui);
-                                }
+                    if self.selected_section == AppSection::Diagnostics {
+                        self.draw_diagnostics(ui);
+                    }
 
-                                if self.selected_section == AppSection::Settings {
-                                    self.draw_settings(ui, ctx);
-                                }
+                    if self.selected_section == AppSection::Settings {
+                        self.draw_settings(ui, ctx);
+                    }
 
-                                if self.selected_section == AppSection::Log {
-                                    self.draw_log(ui);
-                                }
-                            },
-                        );
-                    });
+                    if self.selected_section == AppSection::Log {
+                        self.draw_log(ui);
+                    }
                 });
             });
 
@@ -2687,6 +2681,8 @@ fn draw_status_card(ui: &mut egui::Ui, title: &str, value: &str, ok: bool) {
 }
 
 fn draw_full_width_panel(ui: &mut egui::Ui, add_contents: impl FnOnce(&mut egui::Ui)) {
+    // Explicitly fill the available inner width so short sections do not shrink
+    // to their contents and become misaligned with the panels above them.
     let content_width = (ui.available_width() - 30.0).max(0.0);
     Frame::new()
         .fill(BG_PANEL)
@@ -2694,7 +2690,7 @@ fn draw_full_width_panel(ui: &mut egui::Ui, add_contents: impl FnOnce(&mut egui:
         .inner_margin(Margin::same(14))
         .stroke(Stroke::new(1.0_f32, BORDER))
         .show(ui, |ui| {
-            ui.set_min_width(content_width);
+            ui.set_width(content_width);
             add_contents(ui);
         });
 }
@@ -2870,7 +2866,7 @@ fn draw_plugin_row(ui: &mut egui::Ui, plugin: &str) {
                                 RichText::new(filename)
                                     .monospace()
                                     .color(SECONDARY_TEXT)
-                                    .size(11.5),
+                                    .size(12.0),
                             )
                             .truncate(),
                         )
@@ -2962,7 +2958,7 @@ fn draw_diagnostic_group(
                     egui::Label::new(
                         RichText::new(localized_diagnostic_message(&diagnostic.message))
                             .color(PRIMARY_TEXT)
-                            .size(12.0),
+                            .size(12.5),
                     )
                     .wrap(),
                 );
