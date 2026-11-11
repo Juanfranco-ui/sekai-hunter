@@ -589,7 +589,6 @@ impl SekaiHunterApp {
                     self.prepare_next_archive(ctx);
                 }
                 BackgroundEvent::Failed(message) => {
-                    log::error!("{message}");
                     self.record_with_level(message.clone(), ActivityLevel::Error);
                     self.mod_message = Some((message, true));
                     self.prepare_next_archive(ctx);
@@ -1389,7 +1388,7 @@ impl SekaiHunterApp {
         draw_full_width_panel(ui, |ui| {
             ui.horizontal(|ui| {
                 ui.add_sized(
-                    [156.0, 20.0],
+                    [176.0, 20.0],
                     egui::Label::new(
                         RichText::new("Fecha y hora")
                             .color(SECONDARY_TEXT)
@@ -1418,7 +1417,7 @@ impl SekaiHunterApp {
             for entry in self.activity_log.iter().rev() {
                 ui.horizontal_top(|ui| {
                     ui.add_sized(
-                        [156.0, 20.0],
+                        [176.0, 20.0],
                         egui::Label::new(
                             RichText::new(&entry.timestamp)
                                 .monospace()
@@ -1853,18 +1852,18 @@ impl eframe::App for SekaiHunterApp {
                         ui.label(
                             RichText::new("MONSTER HUNTER: WORLD")
                                 .color(SECONDARY_TEXT)
-                                .size(10.0),
+                                .size(11.0),
                         );
                         ui.label(
                             RichText::new("NATIVE LINUX")
                                 .color(SECONDARY_TEXT)
-                                .size(10.0),
+                                .size(11.0),
                         );
                         ui.add_space(12.0);
                         ui.label(
                             RichText::new("MOD MANAGEMENT INSPIRED BY")
                                 .color(SECONDARY_TEXT)
-                                .size(9.0),
+                                .size(10.0),
                         );
                         ui.hyperlink_to(
                             RichText::new("MHW Mod Manager · BoltMan")
@@ -2867,7 +2866,7 @@ fn draw_plugin_row(ui: &mut egui::Ui, plugin: &str) {
                                 RichText::new(filename)
                                     .monospace()
                                     .color(SECONDARY_TEXT)
-                                    .size(11.5),
+                                    .size(12.0),
                             )
                             .truncate(),
                         )
