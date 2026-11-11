@@ -1,0 +1,24 @@
+[package]
+name = "sekai-hunter"
+version = "0.1.0"
+edition = "2021"
+description = "Native Linux launcher for Monster Hunter: World with Astera Loader"
+license = "MIT"
+
+[dependencies]
+eframe = { version = "0.31", default-features = false, features = ["default_fonts", "glow", "wayland", "x11"] }
+egui = "0.31"
+serde = { version = "1", features = ["derive"] }
+toml = "0.8"
+dirs = "6"
+rfd = "0.15"
+log = "0.4"
+env_logger = "0.11"
+zip = { version = "2", default-features = false, features = ["deflate"] }
+pollster = "0.4"
+winit = { version = "=0.30.13", default-features = false, features = ["wayland", "x11"] }
+
+[profile.release]
+opt-level = "s"
+lto = true
+strip = true
